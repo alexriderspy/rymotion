@@ -10,17 +10,17 @@ import { guide } from "./guide.ts";
 import type { Spec } from "./spec.ts";
 import { TEMPLATES } from "./tokens.ts";
 
-const HELP = `Rymotion (deepseek-motion): motion graphics from any LLM
+const HELP = `Rymotion: motion graphics from any LLM
 
-  deepseek-motion studio ["<idea>"] open the Rymotion studio in your browser
-  deepseek-motion reel "<idea>"     make a vertical reel with music, ready to post
-  deepseek-motion make "<prompt>"   ask a model for a spec, then build it
-  deepseek-motion check <spec.json> validate a spec
-  deepseek-motion build <spec.json> write the HyperFrames project
-  deepseek-motion preview <spec>    build + one PNG per beat
-  deepseek-motion render <spec>     build + render final.mp4
-  deepseek-motion guide             print the spec guide models are given
-  deepseek-motion mcp               run the MCP server on stdio
+  rymotion studio ["<idea>"] open the Rymotion studio in your browser
+  rymotion reel "<idea>"     make a vertical reel with music, ready to post
+  rymotion make "<prompt>"   ask a model for a spec, then build it
+  rymotion check <spec.json> validate a spec
+  rymotion build <spec.json> write the HyperFrames project
+  rymotion preview <spec>    build + one PNG per beat
+  rymotion render <spec>     build + render final.mp4
+  rymotion guide             print the spec guide models are given
+  rymotion mcp               run the MCP server on stdio
 
 Options:
   -o, --out <dir>        project folder (default: out/<title>)
@@ -115,7 +115,7 @@ if (o.help || !cmd) {
 } else if (cmd === "render") {
   await build(loadSpec(arg), { render: true });
 } else if (cmd === "make" || cmd === "reel") {
-  if (!arg) die(`usage: deepseek-motion ${cmd} "<idea>"`);
+  if (!arg) die(`usage: rymotion ${cmd} "<idea>"`);
   if (cmd === "reel") o.format ??= "9:16";
   const cfg = modelConfig({ model: o.model, baseUrl: o["base-url"] });
   if (!cfg.apiKey && !/localhost|127\.0\.0\.1/.test(cfg.baseUrl)) die("no API key: set DEEPSEEK_API_KEY or DEEPSEEK_MOTION_API_KEY");

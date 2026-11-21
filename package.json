@@ -1,12 +1,12 @@
 {
-  "name": "deepseek-motion",
+  "name": "rymotion",
   "version": "0.1.0",
-  "description": "Beautiful motion graphics from DeepSeek or any LLM. The model writes a tiny scene spec; curated presets handle the taste.",
+  "description": "Rymotion: type a sentence, drop in screenshots, get a product film. The model writes a tiny scene plan; curated templates handle the taste.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "deepseek-motion": "dist/cli.js",
-    "rymotion": "dist/cli.js"
+    "rymotion": "dist/cli.js",
+    "deepseek-motion": "dist/cli.js"
   },
   "files": [
     "dist",

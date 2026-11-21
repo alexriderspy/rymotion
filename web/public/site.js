@@ -3,7 +3,7 @@
   const box = document.getElementById("prompt");
   const sheet = document.getElementById("sheet");
   const cmd = document.getElementById("cmd");
-  const BASE = "npx github:alexriderspy/deepseek-motion studio";
+  const BASE = "npx github:alexriderspy/rymotion studio";
   let format = "16:9";
 
   const sync = () => {

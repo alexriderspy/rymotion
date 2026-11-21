@@ -12,17 +12,17 @@ import { lint, render, settleTimes, snapshot } from "./hyperframes.ts";
 // The spec is accepted loosely on purpose: our own validator returns
 // fix-it messages a weak model can act on, which a JSON-schema rejection
 // from the transport would not.
-const specArg = z.record(z.string(), z.unknown()).describe(`A deepseek-motion spec. Call motion_guide first for palettes, type pairs and energies.\n${SCENES_GUIDE}`);
+const specArg = z.record(z.string(), z.unknown()).describe(`A Rymotion spec. Call motion_guide first for palettes, type pairs and energies.\n${SCENES_GUIDE}`);
 const outArg = z.string().optional().describe("Project folder. Defaults to ./out/<title>.");
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "video";
 const text = (t: string) => ({ content: [{ type: "text" as const, text: t }] });
 const fail = (t: string) => ({ ...text(t), isError: true });
 
-const server = new McpServer({ name: "deepseek-motion", version: "0.1.0" });
+const server = new McpServer({ name: "rymotion", version: "0.1.0" });
 
 server.registerTool("motion_guide", {
-  description: "How to write a deepseek-motion spec: formats, palettes, type pairs, energies, scenes and writing rules. Read this before writing a spec.",
+  description: "How to write a Rymotion spec: formats, palettes, type pairs, energies, scenes and writing rules. Read this before writing a spec.",
 }, async () => text(guide()));
 
 server.registerTool("motion_check", {
@@ -49,7 +49,7 @@ server.registerTool("motion_preview", {
   const p = prepare(spec, out);
   if ("error" in p) return fail(p.error!);
   const l = await lint(p.dir);
-  if (!l.ok) return fail(`HyperFrames check failed (a deepseek-motion bug, not your spec):\n${l.output.slice(-2000)}`);
+  if (!l.ok) return fail(`HyperFrames check failed (a Rymotion bug, not your spec):\n${l.output.slice(-2000)}`);
   const s = await snapshot(p.dir, settleTimes(p.spec, p.compiled));
   if (!s.ok) return fail(`Snapshot failed:\n${s.output.slice(-2000)}`);
   const sheet = join(p.dir, "snapshots", "sheet.jpg");

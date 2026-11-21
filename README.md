@@ -2,7 +2,7 @@
 
 **Type a sentence, drop in a few screenshots, get a product film.** Runs on your own computer with DeepSeek or any other cheap model.
 
-Site and examples: **https://alexriderspy.github.io/deepseek-motion/**
+Site and examples: **https://alexriderspy.github.io/rymotion/**
 
 Cheap models write code fine. They have terrible taste. Ask one for a motion graphic and you get default easing,
 cramped type, random colors and text that flashes by too fast to read. Rymotion moves the taste out of the model and
@@ -16,7 +16,7 @@ millisecond or a hex code.
 Needs Node 22.18+ and ffmpeg.
 
 ```bash
-npx github:alexriderspy/deepseek-motion studio
+npx github:alexriderspy/rymotion studio
 ```
 
 This opens the Rymotion studio at `http://127.0.0.1:5177`. Paste a DeepSeek API key once (it is saved in
@@ -26,7 +26,7 @@ This opens the Rymotion studio at `http://127.0.0.1:5177`. Paste a DeepSeek API 
 2. Pick a look (Pastel, Glyph, Studio, Editorial, Dither, Night) or leave it on Auto.
 3. Watch the preview in the page, then export MP4 or WebM. Videos are saved in `~/Rymotion/`.
 
-You can pass the first prompt straight in: `npx github:alexriderspy/deepseek-motion studio "a launch film for my app" --format 9:16`.
+You can pass the first prompt straight in: `npx github:alexriderspy/rymotion studio "a launch film for my app" --format 9:16`.
 
 ## Pictures make it a product film
 
@@ -72,14 +72,14 @@ Use `--music song.mp3` for your own track or `--no-music` for silence.
 ## Commands
 
 ```
-deepseek-motion studio ["<idea>"] open the Rymotion studio in your browser
-deepseek-motion make "<prompt>"   ask a model for a spec, then build it (--template, --asset, --format)
-deepseek-motion reel "<idea>"     a vertical reel with music
-deepseek-motion check <spec.json> validate a spec
-deepseek-motion preview <spec>    build + one PNG per beat
-deepseek-motion render <spec>     build + render final.mp4
-deepseek-motion guide             print the spec guide models are given
-deepseek-motion mcp               run the MCP server on stdio
+rymotion studio ["<idea>"] open the Rymotion studio in your browser
+rymotion make "<prompt>"   ask a model for a spec, then build it (--template, --asset, --format)
+rymotion reel "<idea>"     a vertical reel with music
+rymotion check <spec.json> validate a spec
+rymotion preview <spec>    build + one PNG per beat
+rymotion render <spec>     build + render final.mp4
+rymotion guide             print the spec guide models are given
+rymotion mcp               run the MCP server on stdio
 ```
 
 ## Other models
@@ -102,7 +102,7 @@ When you describe a real product, the guide tells the model to use only the fact
 ## In an agent (MCP)
 
 ```bash
-claude mcp add deepseek-motion -- node /path/to/deepseek-motion/src/cli.ts mcp
+claude mcp add rymotion -- node /path/to/rymotion/src/cli.ts mcp
 ```
 
 | Tool | What it does |
