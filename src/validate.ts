@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Beat, Spec } from "./spec.ts";
-import { FORMATS, MAX_BEAT } from "./tokens.ts";
+import { FORMATS, MAX_BEAT, TEMPLATES } from "./tokens.ts";
 import { checkCode } from "./custom.ts";
 import { plan } from "./timing.ts";
 
@@ -84,6 +84,40 @@ function beatProblems(b: Beat, p: string): Problem[] {
       limitWords(out, `${p}.text`, b.text, 6);
       limitWords(out, `${p}.cta`, b.cta, 6);
       break;
+    case "kinetic":
+      limitWords(out, `${p}.text`, b.text, 3);
+      if (b.text.replace(/\s/g, "").length > 16) out.push({ path: `${p}.text`, message: `"${b.text}" is ${b.text.replace(/\s/g, "").length} letters; kinetic type needs 16 or fewer to stay huge. Use one or two short words.` });
+      limitWords(out, `${p}.sub`, b.sub, 8);
+      break;
+    case "chat":
+      limitWords(out, `${p}.title`, b.title, 7);
+      limitWords(out, `${p}.name`, b.name, 3);
+      b.messages.forEach((m, i) => limitWords(out, `${p}.messages[${i}].text`, m.text, 12));
+      break;
+    case "app":
+      limitWords(out, `${p}.name`, b.name, 3);
+      limitWords(out, `${p}.input`, b.input, 10);
+      limitWords(out, `${p}.button`, b.button, 3);
+      limitWords(out, `${p}.result`, b.result, 14);
+      limitWords(out, `${p}.title`, b.title, 6);
+      break;
+    case "media":
+      limitWords(out, `${p}.label`, b.label, 5);
+      limitWords(out, `${p}.title`, b.title, 7);
+      break;
+    case "collage":
+      limitWords(out, `${p}.title`, b.title, 6);
+      b.cards.forEach((x, i) => limitWords(out, `${p}.cards[${i}].label`, x.label, 3));
+      break;
+    case "logo":
+      limitWords(out, `${p}.name`, b.name, 3);
+      limitWords(out, `${p}.sub`, b.sub, 8);
+      break;
+    case "columns":
+      limitWords(out, `${p}.title`, b.title, 6);
+      b.items.forEach((it, i) => { limitWords(out, `${p}.items[${i}].label`, it.label, 3); limitWords(out, `${p}.items[${i}].note`, it.note, 4); });
+      if (b.pick !== undefined && b.pick >= b.items.length) out.push({ path: `${p}.pick`, message: `pick is ${b.pick} but there are only ${b.items.length} items (0-based). Use 0-${b.items.length - 1} or remove pick.` });
+      break;
   }
   return out;
 }
@@ -93,7 +127,7 @@ function zodProblems(err: z.ZodError): Problem[] {
     const path = i.path.map((k) => (typeof k === "number" ? `[${k}]` : `.${String(k)}`)).join("").replace(/^\./, "") || "(root)";
     let message = i.message;
     if (i.code === "invalid_union" && i.path.at(-1) === "scene")
-      message = "Unknown scene. Use one of: title, statement, stat, list, quote, compare, bars, code, flow, steps, custom, end.";
+      message = "Unknown scene. Use one of: title, statement, stat, list, quote, compare, bars, code, flow, steps, kinetic, chat, app, columns, media, collage, logo, custom, end.";
     return { path, message };
   });
 }
@@ -119,8 +153,22 @@ export function check(input: unknown, opts: CheckOptions = {}): CheckResult {
     return { ok: false, problems: [...zodProblems(parsed.error), ...extra] };
   }
   const spec = parsed.data;
+  // A template decides palette, type and background together.
+  if (spec.template) {
+    const t = TEMPLATES[spec.template];
+    Object.assign(spec, { palette: t.palette, type: t.type, background: t.background });
+  }
 
   const problems = spec.beats.flatMap((b, i) => beatProblems(b, `beats[${i}]`));
+  // Every picture a beat names must be one the user supplied.
+  const have = Object.keys(spec.assets ?? {});
+  spec.beats.forEach((b, i) => {
+    const used = b.scene === "media" ? [b.asset, ...(b.then ?? [])] : b.scene === "collage" ? b.cards.map((x) => x.asset) : b.scene === "logo" ? [b.asset] : [];
+    for (const name of used) if (!have.includes(name))
+      problems.push({ path: `beats[${i}]`, message: have.length
+        ? `There is no asset called "${name}". Use one of: ${have.join(", ")}.`
+        : `"${b.scene}" needs pictures and the user gave none. Use another scene.` });
+  });
   const fmt = FORMATS[spec.format];
   spec.beats.forEach((b, i) => {
     if (b.scene !== "custom") return;

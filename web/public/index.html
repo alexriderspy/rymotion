@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rymotion</title>
+<meta name="description" content="Rymotion: type a sentence, get a motion graphic. Open source, runs on your computer with DeepSeek or any model." />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="site">
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="hush" aria-hidden="true"></div>
+
+<header class="bar">
+  <a class="mark" href="./">Rymotion</a>
+  <a class="pill" href="#examples">
+    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M5 3.5v9l7-4.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+    Examples
+  </a>
+  <a class="gh" href="https://github.com/alexriderspy/deepseek-motion" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<main>
+  <section class="home">
+    <h1>what should we animate?</h1>
+    <p class="sub">Type a sentence and get a polished motion graphic, ready to post. Open source, runs on your own computer.</p>
+    <form class="card" id="ask">
+      <textarea id="prompt" rows="2" placeholder="Describe a motion graphic…" aria-label="Describe a motion graphic"></textarea>
+      <div class="row">
+        <div class="formats" role="radiogroup" aria-label="Format">
+          <button type="button" role="radio" aria-checked="true" data-format="16:9"><i class="ar ar169"></i>16:9</button>
+          <button type="button" role="radio" aria-checked="false" data-format="9:16"><i class="ar ar916"></i>9:16</button>
+          <button type="button" role="radio" aria-checked="false" data-format="1:1"><i class="ar ar11"></i>1:1</button>
+        </div>
+        <div class="send">
+          <span class="hint"><kbd>↵</kbd> generate</span>
+          <span class="hint"><kbd>⇧↵</kbd> newline</span>
+          <button class="go" type="submit" aria-label="Generate">
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 11L11 5M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </form>
+    <div class="ctas">
+      <button class="primary" id="start" type="button">Start building</button>
+      <a class="ghost" href="#examples">See what it makes</a>
+    </div>
+  </section>
+
+  <section class="examples" id="examples">
+    <h2>One sentence and a few screenshots in, one video out</h2>
+    <p class="exsub">Each film below came from a single prompt plus the product's own screenshots. Real products, real numbers.</p>
+    <div class="reel">
+      <figure class="feat">
+        <video src="examples/ryshift.mp4" poster="examples/ryshift.jpg" muted loop playsinline preload="none"></video>
+        <figcaption><b>Ryshift</b><span>Studio template · a free wheel of file tools that opens at your cursor</span></figcaption>
+      </figure>
+      <figure>
+        <video src="examples/heyflitty.mp4" poster="examples/heyflitty.jpg" muted loop playsinline preload="none"></video>
+        <figcaption><b>HeyFlitty</b><span>Pastel · an AI buddy that points at the button you need</span></figcaption>
+      </figure>
+      <figure>
+        <video src="examples/rynovi.mp4" poster="examples/rynovi.jpg" muted loop playsinline preload="none"></video>
+        <figcaption><b>Rynovi</b><span>Editorial · 90 days to an AI/ML Engineer job</span></figcaption>
+      </figure>
+      <figure>
+        <video src="examples/rynovi-jobs.mp4" poster="examples/rynovi-jobs.jpg" muted loop playsinline preload="none"></video>
+        <figcaption><b>Rynovi Jobs</b><span>Glyph · entry-level roles from company career pages</span></figcaption>
+      </figure>
+      <figure>
+        <video src="examples/rymotion.mp4" poster="examples/rymotion.jpg" muted loop playsinline preload="none"></video>
+        <figcaption><b>Rymotion</b><span>Dither · this tool, made with itself</span></figcaption>
+      </figure>
+    </div>
+    <ol class="how">
+      <li><b>01</b>Type a sentence and drop in your screenshots or logo.</li>
+      <li><b>02</b>Pick one of six looks, or let the model choose.</li>
+      <li><b>03</b>Preview it in the browser, then export MP4 or WebM with its own music.</li>
+    </ol>
+    <p class="credit-line">Open source, MIT. Ideas borrowed from <a href="https://github.com/nexu-io/openmotion" target="_blank" rel="noopener">OpenMotion</a> and <a href="https://x.com/stackedlol/status/2112257760628986188" target="_blank" rel="noopener">@stackedlol</a>'s ASCII prompt. Rendered with <a href="https://github.com/heygen-com/hyperframes" target="_blank" rel="noopener">HyperFrames</a>.</p>
+  </section>
+</main>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="panel">
+    <button class="close" id="close" type="button" aria-label="Close">
+      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <p class="kicker">Start building</p>
+    <h3 id="sheet-title">Run it on your computer</h3>
+    <p class="lede">Paste this into a terminal. It opens the Rymotion studio in your browser, ready for your first prompt.</p>
+    <div class="cmd">
+      <code id="cmd">npx github:alexriderspy/deepseek-motion studio</code>
+      <button id="copy" type="button">Copy</button>
+    </div>
+    <ul class="needs">
+      <li><span>needs</span>Node 22.18+ and ffmpeg</li>
+      <li><span>model</span>A DeepSeek API key, or any OpenAI-compatible model (Ollama works offline)</li>
+      <li><span>privacy</span>Your key and your videos stay on your machine</li>
+    </ul>
+    <a class="repo" href="https://github.com/alexriderspy/deepseek-motion" target="_blank" rel="noopener">Read the code on GitHub ↗</a>
+  </div>
+</div>
+
+<script src="field.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

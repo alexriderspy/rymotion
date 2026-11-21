@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rymotion studio</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="studio mode-home">
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="hush" aria-hidden="true"></div>
+
+<header class="bar">
+  <span class="mark">Rymotion<span class="tag">studio</span></span>
+  <div class="hist">
+    <button class="pill" id="history" type="button" aria-expanded="false">
+      <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v2.6h2.6M8 5v3.2l2 1.3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      History
+      <svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <ul class="menu" id="menu" hidden></ul>
+  </div>
+  <span class="model" id="model"></span>
+</header>
+
+<main class="desk">
+  <section class="home" id="home">
+    <h1>what should we animate?</h1>
+  </section>
+
+  <section class="screen" id="screen" hidden>
+    <div class="frame" id="frame">
+      <div class="progress" id="progress">
+        <ol>
+          <li data-stage="plan">writing the scene plan</li>
+          <li data-stage="draw">drawing custom scenes</li>
+          <li data-stage="build">building the video</li>
+        </ol>
+        <p class="elapsed" id="elapsed">0s</p>
+      </div>
+      <div class="viewport" id="viewport"><iframe id="player" title="Preview" tabindex="-1"></iframe></div>
+      <p class="err" id="err" hidden></p>
+    </div>
+    <div class="controls" id="controls" hidden>
+      <button class="play" id="play" type="button" aria-label="Play">
+        <svg class="i-play" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 3.5v9l7-4.5z" fill="currentColor"/></svg>
+        <svg class="i-pause" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" fill="currentColor"/></svg>
+      </button>
+      <div class="scrub" id="scrub"><div class="ticks" id="ticks"></div><div class="fill" id="fill"></div><div class="knob" id="knob"></div></div>
+      <span class="time" id="time">0:00 / 0:00</span>
+      <button class="ex" type="button" data-kind="mp4">Export MP4</button>
+      <button class="ex" type="button" data-kind="webm">WebM</button>
+    </div>
+  </section>
+
+  <div class="dock">
+    <form class="card" id="ask">
+      <ul class="atts" id="atts" hidden></ul>
+      <textarea id="prompt" rows="2" placeholder="Describe a motion graphic…" aria-label="Describe a motion graphic"></textarea>
+      <div class="row">
+        <div class="left">
+        <button class="attach" id="attach" type="button" aria-label="Add screenshots or a logo" title="Add screenshots or a logo">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" multiple hidden />
+        <div class="formats" role="radiogroup" aria-label="Format">
+          <button type="button" role="radio" aria-checked="true" data-format="16:9"><i class="ar ar169"></i>16:9</button>
+          <button type="button" role="radio" aria-checked="false" data-format="9:16"><i class="ar ar916"></i>9:16</button>
+          <button type="button" role="radio" aria-checked="false" data-format="1:1"><i class="ar ar11"></i>1:1</button>
+        </div>
+        </div>
+        <div class="send">
+          <span class="hint"><kbd>↵</kbd> generate</span>
+          <span class="hint"><kbd>⇧↵</kbd> newline</span>
+          <button class="go" type="submit" aria-label="Generate">
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M5 11L11 5M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </form>
+    <form class="keybox" id="keybox" hidden>
+      <label for="key">Add your DeepSeek API key to start</label>
+      <div class="keyrow">
+        <input id="key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" />
+        <button type="submit">Save</button>
+      </div>
+      <p>Saved in <code>~/.config/rymotion</code> on this computer only. Get one at <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com ↗</a></p>
+    </form>
+    <div class="looks" id="looks" role="radiogroup" aria-label="Look">
+      <button type="button" role="radio" aria-checked="true" data-template=""><i class="sw sw-auto"></i>Auto</button>
+      <button type="button" role="radio" aria-checked="false" data-template="pastel"><i class="sw" style="background:#e6f5a8"></i>Pastel</button>
+      <button type="button" role="radio" aria-checked="false" data-template="glyph"><i class="sw" style="background:#1838c4"></i>Glyph</button>
+      <button type="button" role="radio" aria-checked="false" data-template="studio"><i class="sw" style="background:#0c0c0e"></i>Studio</button>
+      <button type="button" role="radio" aria-checked="false" data-template="editorial"><i class="sw" style="background:#f2ede3"></i>Editorial</button>
+      <button type="button" role="radio" aria-checked="false" data-template="dither"><i class="sw sw-dots"></i>Dither</button>
+      <button type="button" role="radio" aria-checked="false" data-template="night"><i class="sw" style="background:#1a1d2b"></i>Night</button>
+    </div>
+    <ul class="ideas" id="ideas">
+      <li><button type="button">a 15-second teaser for a Mac menu-bar app</button></li>
+      <li><button type="button">how RAG works, in 20 seconds</button></li>
+      <li><button type="button">why our café's oat latte is worth the queue</button></li>
+    </ul>
+  </div>
+</main>
+
+<script src="field.js"></script>
+<script src="studio.js"></script>
+</body>
+</html>

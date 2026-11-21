@@ -95,11 +95,11 @@ export function steps(b: B<"steps">, c: Ctx): SceneOut {
   const n = b.steps.length;
   // Five or more labels side by side get too small to read: stack them.
   const vertical = c.portrait || n >= 5;
-  const dot = Math.round(c.size.body * (vertical ? 1.4 : 1.5));
+  const dot = Math.round(c.size.body * (vertical ? (c.portrait ? 1.7 : 1.4) : 1.5));
   const W = c.portrait ? Math.round(c.availW * 0.9) : vertical ? Math.round(c.availW * 0.6) : c.availW;
   const longest = b.steps.reduce((a, x) => (x.length > a.length ? x : a), "");
   const fs = vertical
-    ? fitSize(longest, Math.round(c.size.body * 1.15), W - dot * 1.6, c.type.body.family, 1)
+    ? fitSize(longest, Math.round(c.size.body * (c.portrait ? 1.45 : 1.15)), W - dot * 1.6, c.type.body.family, 1)
     : fitSize(longest, Math.round(c.size.body * 1.3), (W / n) * 0.88, c.type.body.family, 2);
   const html = `${h.html}
     <div class="stepper">

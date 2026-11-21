@@ -5,11 +5,13 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "deepseek-motion": "dist/cli.js"
+    "deepseek-motion": "dist/cli.js",
+    "rymotion": "dist/cli.js"
   },
   "files": [
     "dist",
     "examples",
+    "web/public",
     "README.md"
   ],
   "scripts": {
@@ -18,7 +20,8 @@
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "matrix": "node scripts/matrix.ts",
-    "prepare": "tsc"
+    "prepare": "tsc",
+    "studio": "node src/cli.ts studio"
   },
   "engines": {
     "node": ">=22.18"

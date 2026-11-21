@@ -61,7 +61,7 @@ export interface MakeResult {
   duration: number;
 }
 
-export async function makeSpec(prompt: string, cfg: ModelConfig, opts: { maxAttempts?: number; log?: (s: string) => void } = {}): Promise<MakeResult> {
+export async function makeSpec(prompt: string, cfg: ModelConfig, opts: { maxAttempts?: number; log?: (s: string) => void; assets?: Record<string, string> } = {}): Promise<MakeResult> {
   const log = opts.log ?? (() => {});
   const messages: Msg[] = [
     { role: "system", content: guide(seedOf(prompt)) },
@@ -76,7 +76,10 @@ export async function makeSpec(prompt: string, cfg: ModelConfig, opts: { maxAtte
     messages.push({ role: "assistant", content: reply.text });
     let res: CheckResult;
     try {
-      res = check(extractJson(reply.text));
+      const raw = extractJson(reply.text) as Record<string, unknown>;
+      // The tool, not the model, owns where the pictures live.
+      if (opts.assets && Object.keys(opts.assets).length) raw.assets = opts.assets;
+      res = check(raw);
     } catch (err) {
       res = { ok: false, problems: [{ path: "(reply)", message: `Not valid JSON (${(err as Error).message}). Reply with one JSON object only.` }] };
     }
@@ -107,6 +110,7 @@ export async function writeCustomCode(spec: Spec, cfg: ModelConfig, opts: { log?
   const log = opts.log ?? (() => {});
   const usage: Usage = { prompt: 0, completion: 0 };
   const fmt = FORMATS[spec.format];
+  const failed = new Set<number>();
   const jobs = spec.beats.map((b, i) => ({ b, i })).filter(({ b, i }) => b.scene === "custom" && (!b.code || opts.feedback?.has(i)));
   await Promise.all(jobs.map(async ({ b, i }) => {
     if (b.scene !== "custom") return;
@@ -127,8 +131,11 @@ export async function writeCustomCode(spec: Spec, cfg: ModelConfig, opts: { log?
       messages.push({ role: "assistant", content: reply.text });
       messages.push({ role: "user", content: `The code has problems:\n- ${res.problems.join("\n- ")}\nFix them and reply with the full function body in one \`\`\`js block.` });
     }
-    throw new Error(`beats[${i}]: no working custom code after 3 attempts`);
+    log(`beats[${i}]: no working custom code after 3 attempts; dropping this beat`);
+    failed.add(i);
   }));
+  // A moment that never drew cleanly is cut; the rest of the video stands.
+  if (failed.size) spec.beats = spec.beats.filter((_, i) => !failed.has(i));
   return usage;
 }
 

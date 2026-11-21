@@ -18,6 +18,12 @@ export interface Ctx {
   portrait: boolean;
   // Entrance travel distance in px for this canvas.
   travel: number;
+  // Beat position, and the palette's colour fields (one entry when the
+  // palette is not flat), for scenes that paint with several colours.
+  index: number;
+  fields: string[];
+  // The user's pictures by name: path inside the project and pixel size.
+  assets: Record<string, { src: string; w: number; h: number }>;
 }
 
 export interface SceneOut {
@@ -47,7 +53,7 @@ const GLYPH_EM: Record<string, number> = {
   "Geist Mono": 0.6,
   "Anton": 0.52,
   "Unbounded": 0.74,
-  "Instrument Serif": 0.42,
+  "Instrument Serif": 0.38,
 };
 
 export function fitSize(text: string, base: number, availW: number, family: string, maxLines: number): number {

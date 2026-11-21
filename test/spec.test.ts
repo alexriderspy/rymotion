@@ -67,7 +67,10 @@ test("hold time follows reading time and an explicit hold wins", () => {
 
 test("every palette is readable", async () => {
   const { contrast, readable } = await import("../src/color.ts");
-  for (const [name, p] of Object.entries(PALETTES)) {
+  for (const [name, base] of Object.entries(PALETTES)) {
+    // Flat palettes put every beat on a different field; each must pass.
+    for (const bg of base.fields ?? [base.bg]) {
+    const p = { ...base, bg };
     assert.ok(contrast(p.ink, p.bg) >= 7, `${name} ink`);
     assert.ok(contrast(p.ink, p.surface) >= 7, `${name} ink on surface`);
     assert.ok(contrast(p.muted, p.bg) >= 4.5, `${name} muted`);
@@ -75,6 +78,7 @@ test("every palette is readable", async () => {
     assert.ok(contrast(p.accent, p.bg) >= 3, `${name} accent (large text)`);
     assert.ok(contrast(p.onAccent, p.accent) >= 4, `${name} text on accent`);
     assert.ok(contrast(readable(p.accent, p.ink, p.bg), p.bg) >= 4.5, `${name} small accent text`);
+    }
   }
 });
 
@@ -99,17 +103,19 @@ test("a requested duration is hit, and an impossible one asks to cut beats", () 
   assert.match(long.problems[0].message, /Add about \d+ more beat/);
 });
 
-test("fast energies cut with a wipe, slow ones fade", () => {
-  const spec = (energy: string) => check({ title: "t", energy, beats: [{ scene: "title", text: "A" }, { scene: "end", text: "B" }] });
-  const snappy = spec("snappy"), calm = spec("calm");
-  assert.ok(snappy.ok && calm.ok);
-  assert.match(compile(snappy.spec).html, /class="wipe"/);
-  assert.doesNotMatch(compile(calm.spec).html, /class="wipe"/);
+test("every cut has a transition and none repeats back to back", async () => {
+  const { cutPlan } = await import("../src/compile.ts");
+  const beats = Array.from({ length: 9 }, () => ({ scene: "statement", text: "Hi." }));
+  for (const flat of [true, false]) {
+    const cuts = cutPlan({ title: "a video", energy: "snappy", beats } as never, flat);
+    assert.equal(cuts.length, 8);
+    for (let i = 1; i < cuts.length; i++) assert.notEqual(cuts[i], cuts[i - 1]);
+  }
 });
 
 test("the guide lists options in a per-prompt order", async () => {
   const { guide, seedOf } = await import("../src/guide.ts");
-  const first = (g: string) => g.split("Palettes:\n")[1].split("\n")[0];
+  const first = (g: string) => g.split("Palettes (only when no template fits):\n")[1].split("\n")[0];
   const firsts = new Set(["a reel about cats", "launch video", "explain recursion", "recipe", "showreel"].map((p) => first(guide(seedOf(p)))));
   assert.ok(firsts.size >= 3, [...firsts].join(" | "));
 });

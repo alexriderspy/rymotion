@@ -21,7 +21,52 @@ export function readingWords(b: Beat): number {
     case "flow": return wc(b.title) + b.nodes.reduce((n, x) => n + wc(x), 0) + wc(b.caption);
     case "steps": return wc(b.title) + b.steps.reduce((n, x) => n + wc(x), 0);
     case "custom": return 0;
+    case "kinetic": return wc(b.text) + wc(b.sub);
+    // Chat and app scenes are read as they play; their intro covers it.
+    case "chat": return wc(b.title);
+    case "app": return wc(b.title);
+    case "columns": return wc(b.title) + b.items.reduce((n, it) => n + wc(it.label) + wc(it.note), 0);
+    case "media": return wc(b.title) + wc(b.label);
+    case "collage": return wc(b.title) + b.cards.reduce((n, x) => n + wc(x.label), 0);
+    case "logo": return wc(b.name) + wc(b.sub);
   }
+}
+
+// A media beat: the device lands, extra pictures step through, then the
+// camera pushes toward the focus and the label pins on.
+export function mediaTimes(b: Extract<Beat, { scene: "media" }>) {
+  const frames = (b.then ?? []).map((_, i) => 1.3 + i * 1.5);
+  const zoomAt = frames.length ? frames[frames.length - 1] + 0.9 : 1.15;
+  const zoom = (b.zoom ?? 1.5) > 1.02 ? 1.5 : 0;
+  const label = zoomAt + Math.max(0.3, zoom * 0.7);
+  return { frames, zoomAt, zoom: zoom || 0.01, label, end: label + (b.label ? 0.7 : 0.2) };
+}
+
+const chars = (s?: string) => (s ?? "").replace(/\s+/g, " ").trim().length;
+
+// When each chat message appears, in seconds from the start of the beat.
+// A reply is preceded by a typing indicator; each message stays alone long
+// enough to read before the next one lands.
+export function chatTimes(b: Extract<Beat, { scene: "chat" }>): { show: number[]; typing: number; end: number } {
+  const typing = 0.75;
+  let t = 0.9;
+  const show = b.messages.map((m) => {
+    if (m.from === "them") t += typing;
+    const at = t;
+    t += 0.3 + wc(m.text) / 4.5;
+    return at;
+  });
+  return { show, typing, end: t };
+}
+
+// Key moments of an app demo: typing, the cursor's travel, the click, the result.
+export function appTimes(b: Extract<Beat, { scene: "app" }>) {
+  const typeStart = 0.75;
+  const typeEnd = typeStart + Math.min(1.8, Math.max(0.3, chars(b.input) * 0.045));
+  const move = 0.85;
+  const click = typeEnd + 0.25 + move;
+  const result = click + 0.95;
+  return { typeStart, typeEnd, move, click, result, end: result + 0.9 };
 }
 
 export const countDuration = (e: Energy) => Math.max(1.2, e.enter * 1.8);
@@ -41,6 +86,13 @@ export function introTime(b: Beat, e: Energy): number {
     case "steps": return 0.3 + b.steps.length * stepGap(e) + 0.2;
     // A custom moment choreographs itself across its whole length.
     case "custom": return b.seconds;
+    case "kinetic": return 0.2 + [...b.text.replace(/\s/g, "")].length * 0.055 + 1.15 + (b.sub ? 0.4 : 0);
+    case "chat": return chatTimes(b).end;
+    case "app": return appTimes(b).end;
+    case "columns": return 1.4 + b.items.length * 0.09 + (b.pick !== undefined ? 1.0 : 0);
+    case "media": return mediaTimes(b).end;
+    case "collage": return 1.2 + b.cards.length * 0.32;
+    case "logo": return 1.7 + (b.sub ? 0.4 : 0);
   }
 }
 
@@ -56,7 +108,7 @@ export function holdTime(b: Beat): number {
 // Shortest a hold may be squeezed to when the user asked for a length.
 const SQUEEZE_MIN = 0.7;
 // How far holds may stretch to fill a longer requested length.
-const STRETCH_MAX = 1.8;
+const STRETCH_MAX = 2.6;
 
 export interface Plan {
   durations: number[];
@@ -71,7 +123,8 @@ const round = (n: number) => Math.round(n * 100) / 100;
 
 export function plan(spec: Pick<Spec, "energy" | "beats" | "duration">): Plan {
   const e = ENERGIES[spec.energy];
-  const fixed = spec.beats.map((b) => introTime(b, e) + e.exit);
+  // Shots overlap at cuts, so no time is spent on an exit.
+  const fixed = spec.beats.map((b) => introTime(b, e) + 0.15);
   let holds = spec.beats.map(holdTime);
   let overflow: Plan["overflow"];
   if (spec.duration) {

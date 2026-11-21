@@ -8,9 +8,11 @@ import { lint, render, settleTimes, snapshot } from "./hyperframes.ts";
 import { makeSpec, modelConfig, reviewCustom, writeCustomCode, type Review } from "./make.ts";
 import { guide } from "./guide.ts";
 import type { Spec } from "./spec.ts";
+import { TEMPLATES } from "./tokens.ts";
 
-const HELP = `deepseek-motion: motion graphics from any LLM
+const HELP = `Rymotion (deepseek-motion): motion graphics from any LLM
 
+  deepseek-motion studio ["<idea>"] open the Rymotion studio in your browser
   deepseek-motion reel "<idea>"     make a vertical reel with music, ready to post
   deepseek-motion make "<prompt>"   ask a model for a spec, then build it
   deepseek-motion check <spec.json> validate a spec
@@ -24,6 +26,8 @@ Options:
   -o, --out <dir>        project folder (default: out/<title>)
   -q, --quality <q>      draft | looks | delivery (default: looks)
   --format <f>           make: force 16:9 | 9:16 | 1:1 | 4:5
+  --template <t>         make: force a look (pastel, glyph, studio, editorial, dither, night)
+  --asset <n=path::desc> make: a screenshot or logo the video can show (repeatable)
   --model <id>           make: model id (default: deepseek-flash)
   --base-url <url>       make: OpenAI-compatible endpoint (default: DeepSeek)
   --no-render            make: stop after preview frames
@@ -33,18 +37,25 @@ Options:
 
 Env: DEEPSEEK_API_KEY, or DEEPSEEK_MOTION_API_KEY + DEEPSEEK_MOTION_BASE_URL + DEEPSEEK_MOTION_MODEL.`;
 
+// A .env in the working folder can hold the key (it is gitignored).
+if (existsSync(".env")) process.loadEnvFile(".env");
+
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     out: { type: "string", short: "o" },
     quality: { type: "string", short: "q", default: "looks" },
     format: { type: "string" },
+    template: { type: "string" },
+    asset: { type: "string", multiple: true },
     model: { type: "string" },
     "base-url": { type: "string" },
     "no-render": { type: "boolean", default: false },
     music: { type: "string" },
     "no-music": { type: "boolean", default: false },
     "review-rounds": { type: "string", default: "1" },
+    port: { type: "string" },
+    "no-open": { type: "boolean", default: false },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -108,19 +119,36 @@ if (o.help || !cmd) {
   if (cmd === "reel") o.format ??= "9:16";
   const cfg = modelConfig({ model: o.model, baseUrl: o["base-url"] });
   if (!cfg.apiKey && !/localhost|127\.0\.0\.1/.test(cfg.baseUrl)) die("no API key: set DEEPSEEK_API_KEY or DEEPSEEK_MOTION_API_KEY");
-  const prompt = o.format ? `${arg}\n\nUse format "${o.format}".` : arg;
+  // --asset name=path::what it shows. The model sees names and descriptions;
+  // the paths are attached to the spec afterwards.
+  const assets: Record<string, string> = {};
+  const about: string[] = [];
+  for (const a of o.asset ?? []) {
+    const m = a.match(/^([\w-]+)=([^:]+?)(?:::(.*))?$/);
+    if (!m) die(`--asset must look like name=path::description, got "${a}"`);
+    const path = resolve(m[2]);
+    if (!existsSync(path)) die(`asset file not found: ${m[2]}`);
+    assets[m[1]] = path;
+    about.push(`  - ${m[1]}: ${m[3] ?? "(no description)"}`);
+  }
+  if (o.template && !(o.template in TEMPLATES)) die(`unknown template "${o.template}". Use one of: ${Object.keys(TEMPLATES).join(", ")}`);
+  const prompt = `${arg}${o.format ? `\n\nUse format "${o.format}".` : ""}${o.template ? `\nUse template "${o.template}".` : ""}${about.length ? `\n\nAssets you can use (by name):\n${about.join("\n")}` : ""}`;
   console.log(`asking ${cfg.model}...`);
   const t = Date.now();
-  const res = await makeSpec(prompt, cfg, { log: (s) => console.log(s) });
+  const res = await makeSpec(prompt, cfg, { log: (s) => console.log(s), assets });
   if (o.format) res.spec.format = o.format as Spec["format"];
+  if (o.template) Object.assign(res.spec, { template: o.template, palette: TEMPLATES[o.template].palette, type: TEMPLATES[o.template].type, background: TEMPLATES[o.template].background });
   console.log(`spec ok after ${res.attempts} attempt(s) in ${((Date.now() - t) / 1000).toFixed(1)}s, ${res.usage.prompt}+${res.usage.completion} tokens`);
   if (res.warnings) console.log(`warnings:\n${res.warnings}`);
   const log = (s: string) => console.log(s);
-  const customs = res.spec.beats.map((b, i) => ({ b, i })).filter(({ b }) => b.scene === "custom");
+  const findCustoms = () => res.spec.beats.map((b, i) => ({ b, i })).filter(({ b }) => b.scene === "custom");
+  let customs = findCustoms();
   if (customs.length) {
     console.log(`writing code for ${customs.length} custom scene(s)...`);
     const u = await writeCustomCode(res.spec, cfg, { log });
     res.usage.prompt += u.prompt; res.usage.completion += u.completion;
+    // Beats whose code never worked were dropped; positions may have moved.
+    customs = findCustoms();
   }
   const dir = outDir(res.spec);
   mkdirSync(dir, { recursive: true });
@@ -140,10 +168,14 @@ if (o.help || !cmd) {
     console.log(`redrawing ${weak.length} scene(s)...`);
     const u = await writeCustomCode(res.spec, cfg, { log, feedback: new Map(weak.map((rv) => [rv.index, rv.problems.map((p) => `- ${p}`).join("\n")])) });
     res.usage.prompt += u.prompt; res.usage.completion += u.completion;
+    customs = findCustoms();
   }
   console.log(`total ${res.usage.prompt}+${res.usage.completion} tokens`);
   await build(res.spec, { preview: true, render: !o["no-render"] });
   writeFileSync(join(dir, "make.json"), JSON.stringify({ prompt: arg, model: cfg.model, ...res, reviews }, null, 2) + "\n");
+} else if (cmd === "studio") {
+  const { startStudio } = await import("./studio.ts");
+  startStudio({ prompt: arg, format: o.format, port: o.port ? Number(o.port) : undefined, open: !o["no-open"] });
 } else if (cmd === "mcp") {
   await import("./mcp.ts");
 } else {
